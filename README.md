@@ -22,7 +22,7 @@ Built upon [Ovis-U1](https://github.com/AIDC-AI/Ovis-U1), Ovis-Image is a 7B tex
 
 
 <p align="center">
-  <img src="docs/imgs/ovis_image_arch.png" width="95%">
+  <img src="docs/imgs/ovis_image_arch_v2.png" width="95%">
   <br>
   <em>The overall architecture of Ovis-Image (cf. Fig.2 in our report).</em>
 </p>
