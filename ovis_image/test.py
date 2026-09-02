@@ -24,6 +24,11 @@ def parse_args():
     parser.add_argument('--image_size', type=int, default=1024)
     parser.add_argument('--denoising_steps', type=int, default=50)
     parser.add_argument('--cfg_scale', type=float, default=5.0)
+    parser.add_argument(
+        '--sequential_cpu_offload',
+        action='store_true',
+        help='Move components between CPU and GPU by inference stage to reduce VRAM use.',
+    )
     args = parser.parse_args()
     return args
 
@@ -76,6 +81,7 @@ def main():
             denoising_steps=args.denoising_steps,
             cfg_scale=args.cfg_scale,
             seed=42,
+            sequential_cpu_offload=args.sequential_cpu_offload,
         )
     image_name = f"ovis_image.png"
     save_image(

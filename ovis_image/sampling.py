@@ -80,6 +80,7 @@ def generate_image(
     denoising_steps: int = 50,
     cfg_scale: float = 5.0,
     seed: int = 42,
+    sequential_cpu_offload: bool = False,
 ) -> torch.Tensor:
     """
     Sampling and save a single images from noise using a given prompt.
@@ -105,6 +106,17 @@ def generate_image(
             empty_ovis_token_ids.to(device=device), empty_ovis_token_mask.to(device=device)
         )
 
+    # Prompt encoding is complete. The Ovis encoder is not used by the
+    # denoising loop, and the autoencoder is only needed after denoising.
+    # Moving both to CPU here avoids keeping all three large components on
+    # the GPU at once during inference on 24 GB cards.
+    if sequential_cpu_offload:
+        print("Offloading text encoder and VAE to CPU before denoising")
+        ovis_encoder.to("cpu")
+        autoencoder.to("cpu")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     latents = generate_noise_latent(
         ovis_token_ids.shape[0],
         img_height, img_width, device, dtype, seed=seed,
@@ -123,6 +135,13 @@ def generate_image(
         ),
         classifier_free_guidance_scale=cfg_scale,
     )
+
+    if sequential_cpu_offload:
+        print("Offloading denoiser to CPU and moving VAE to GPU for decoding")
+        model.to("cpu")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        autoencoder.to(device=device, dtype=dtype)
 
     img = autoencoder.decode(img)
     return img
